@@ -290,18 +290,6 @@ admin123
 
 ---
 
-## 📝 Farmer Registration
-
-![Farmer Registration](screenshots/registration.png)
-
----
-
-## 🔐 Farmer Login
-
-![Farmer Login](screenshots/login.png)
-
----
-
 ## 📊 Farmer Dashboard
 
 ![Farmer Dashboard](screenshots/dashboard.png)
