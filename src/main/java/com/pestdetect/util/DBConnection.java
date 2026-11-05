@@ -20,7 +20,7 @@ public class DBConnection {
 
         String host = System.getenv("MYSQLHOST");
         String port = System.getenv("MYSQLPORT");
-        String database = System.getenv("MYSQLDATABASE");
+        String database = System.getenv("MYSQL_DATABASE");
         String user = System.getenv("MYSQLUSER");
         String password = System.getenv("MYSQLPASSWORD");
 
