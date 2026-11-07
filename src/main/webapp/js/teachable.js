@@ -1,21 +1,15 @@
-```javascript
 /* =========================================================
    PestGuard AI - Teachable Machine Integration
    ========================================================= */
 
-// New 11-class Teachable Machine model
 const MODEL_URL = "https://teachablemachine.withgoogle.com/models/SKHEyfMAp/";
 
-// Minimum confidence threshold: 75%
 const MIN_CONFIDENCE = 0.75;
 
 let model = null;
 
 
-// =========================================================
-// Load AI Model
-// =========================================================
-
+// Load AI model
 async function loadModel() {
 
     if (model) return;
@@ -32,10 +26,7 @@ async function loadModel() {
 }
 
 
-// =========================================================
-// Preview Selected Image
-// =========================================================
-
+// Preview selected image
 function onFileChosen(input) {
 
     const file = input.files[0];
@@ -47,10 +38,6 @@ function onFileChosen(input) {
     reader.onload = function(e) {
 
         const img = document.getElementById("preview");
-
-        img.onload = function() {
-            document.getElementById("status").textContent = "";
-        };
 
         img.src = e.target.result;
         img.style.display = "block";
@@ -64,16 +51,10 @@ function onFileChosen(input) {
 
     document.getElementById("pestName").value = "";
     document.getElementById("confidence").value = "";
-
-    document.getElementById("predLabel").textContent = "";
-    document.getElementById("predConf").textContent = "";
 }
 
 
-// =========================================================
-// Detect Pest
-// =========================================================
-
+// Detect pest
 async function detectPest() {
 
     const img = document.getElementById("preview");
@@ -87,27 +68,14 @@ async function detectPest() {
 
     const saveBtn = document.getElementById("saveBtn");
 
-    const predLabel = document.getElementById("predLabel");
-    const predConf = document.getElementById("predConf");
-
     saveBtn.disabled = true;
-
-    document.getElementById("status").textContent =
-        "Analyzing image...";
 
     try {
 
-        // Load model
         await loadModel();
 
-        // Get predictions
         const predictions = await model.predict(img);
 
-        if (!predictions || predictions.length === 0) {
-            throw new Error("No predictions received.");
-        }
-
-        // Find highest probability prediction
         let best = predictions[0];
 
         for (const p of predictions) {
@@ -119,13 +87,12 @@ async function detectPest() {
 
         const pct = (best.probability * 100).toFixed(2);
 
+        const predLabel = document.getElementById("predLabel");
+        const predConf = document.getElementById("predConf");
+
         document.getElementById("predBox").style.display = "block";
 
-
-        // =================================================
-        // Reject Invalid Images
-        // =================================================
-
+        // Reject Invalid Image class
         if (best.className.trim().toLowerCase() === "invalid image") {
 
             predLabel.textContent =
@@ -142,11 +109,7 @@ async function detectPest() {
             return;
         }
 
-
-        // =================================================
-        // Reject Low Confidence Predictions
-        // =================================================
-
+        // Reject low-confidence predictions
         if (best.probability < MIN_CONFIDENCE) {
 
             predLabel.textContent =
@@ -163,17 +126,12 @@ async function detectPest() {
             return;
         }
 
-
-        // =================================================
-        // Accept Valid Prediction
-        // =================================================
-
+        // Accept prediction
         predLabel.textContent = best.className;
 
         predConf.textContent = pct + "%";
 
-        document.getElementById("pestName").value =
-            best.className;
+        document.getElementById("pestName").value = best.className;
 
         document.getElementById("confidence").value = pct;
 
@@ -182,28 +140,11 @@ async function detectPest() {
         document.getElementById("status").textContent =
             "Prediction completed successfully.";
 
-    }
-
-    catch (err) {
-
-        console.error("PestGuard AI Error:", err);
-
-        model = null;
-
-        document.getElementById("predBox").style.display = "block";
-
-        predLabel.textContent =
-            "Unable to analyze image. Please try again.";
-
-        predConf.textContent = "N/A";
-
-        document.getElementById("pestName").value = "";
-        document.getElementById("confidence").value = "";
-
-        saveBtn.disabled = true;
+    } catch (err) {
 
         document.getElementById("status").textContent =
             "Could not load the AI model. Please try again.";
+
+        console.error(err);
     }
 }
-```
