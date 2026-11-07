@@ -1,15 +1,21 @@
+```javascript
 /* =========================================================
    PestGuard AI - Teachable Machine Integration
    ========================================================= */
 
-const MODEL_URL = "https://teachablemachine.withgoogle.com/models/mbYcQ3oo3/";
+// New 11-class Teachable Machine model
+const MODEL_URL = "https://teachablemachine.withgoogle.com/models/SKHEyfMAp/";
 
+// Minimum confidence threshold: 75%
 const MIN_CONFIDENCE = 0.75;
 
 let model = null;
 
 
-// Load AI model
+// =========================================================
+// Load AI Model
+// =========================================================
+
 async function loadModel() {
 
     if (model) return;
@@ -26,7 +32,10 @@ async function loadModel() {
 }
 
 
-// Preview selected image
+// =========================================================
+// Preview Selected Image
+// =========================================================
+
 function onFileChosen(input) {
 
     const file = input.files[0];
@@ -38,6 +47,10 @@ function onFileChosen(input) {
     reader.onload = function(e) {
 
         const img = document.getElementById("preview");
+
+        img.onload = function() {
+            document.getElementById("status").textContent = "";
+        };
 
         img.src = e.target.result;
         img.style.display = "block";
@@ -51,10 +64,16 @@ function onFileChosen(input) {
 
     document.getElementById("pestName").value = "";
     document.getElementById("confidence").value = "";
+
+    document.getElementById("predLabel").textContent = "";
+    document.getElementById("predConf").textContent = "";
 }
 
 
-// Detect pest
+// =========================================================
+// Detect Pest
+// =========================================================
+
 async function detectPest() {
 
     const img = document.getElementById("preview");
@@ -68,38 +87,72 @@ async function detectPest() {
 
     const saveBtn = document.getElementById("saveBtn");
 
+    const predLabel = document.getElementById("predLabel");
+    const predConf = document.getElementById("predConf");
+
     saveBtn.disabled = true;
+
+    document.getElementById("status").textContent =
+        "Analyzing image...";
 
     try {
 
+        // Load model
         await loadModel();
 
+        // Get predictions
         const predictions = await model.predict(img);
 
+        if (!predictions || predictions.length === 0) {
+            throw new Error("No predictions received.");
+        }
+
+        // Find highest probability prediction
         let best = predictions[0];
 
         for (const p of predictions) {
 
             if (p.probability > best.probability) {
-
                 best = p;
             }
         }
 
         const pct = (best.probability * 100).toFixed(2);
 
-        const predLabel = document.getElementById("predLabel");
-        const predConf = document.getElementById("predConf");
-
         document.getElementById("predBox").style.display = "block";
 
-        // Reject low-confidence predictions
+
+        // =================================================
+        // Reject Invalid Images
+        // =================================================
+
+        if (best.className.trim().toLowerCase() === "invalid image") {
+
+            predLabel.textContent =
+                "Invalid Image. Please upload a plant leaf image.";
+
+            predConf.textContent = "N/A";
+
+            document.getElementById("pestName").value = "";
+            document.getElementById("confidence").value = "";
+
+            document.getElementById("status").textContent =
+                "Image rejected. Please upload a valid leaf image.";
+
+            return;
+        }
+
+
+        // =================================================
+        // Reject Low Confidence Predictions
+        // =================================================
+
         if (best.probability < MIN_CONFIDENCE) {
 
             predLabel.textContent =
                 "Unable to identify. Please upload a clear leaf image.";
 
-            predConf.textContent = pct + "%";
+            predConf.textContent = "N/A";
 
             document.getElementById("pestName").value = "";
             document.getElementById("confidence").value = "";
@@ -110,7 +163,11 @@ async function detectPest() {
             return;
         }
 
-        // Accept prediction
+
+        // =================================================
+        // Accept Valid Prediction
+        // =================================================
+
         predLabel.textContent = best.className;
 
         predConf.textContent = pct + "%";
@@ -125,11 +182,28 @@ async function detectPest() {
         document.getElementById("status").textContent =
             "Prediction completed successfully.";
 
-    } catch (err) {
+    }
+
+    catch (err) {
+
+        console.error("PestGuard AI Error:", err);
+
+        model = null;
+
+        document.getElementById("predBox").style.display = "block";
+
+        predLabel.textContent =
+            "Unable to analyze image. Please try again.";
+
+        predConf.textContent = "N/A";
+
+        document.getElementById("pestName").value = "";
+        document.getElementById("confidence").value = "";
+
+        saveBtn.disabled = true;
 
         document.getElementById("status").textContent =
             "Could not load the AI model. Please try again.";
-
-        console.error(err);
     }
 }
+```
